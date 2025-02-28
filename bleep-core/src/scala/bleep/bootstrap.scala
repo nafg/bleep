@@ -15,7 +15,7 @@ object bootstrap {
     val buildPaths = BuildPaths(FileUtils.cwd, buildLoader, buildVariant)
 
     val exitCode: ExitCode =
-      bleepLoggers.stdoutNoLogFile(bleepConfig, commonOpts).map(l => l.withPath(s"[script $scriptName]")).untyped.use { logger =>
+      bleepLoggers.stdoutNoLogFile(bleepConfig, commonOpts).map(l => l.withPath(s"[script $scriptName]")).use { logger =>
         val ec = ExecutionContext.global
         val maybeStarted = for {
           existingBuild <- buildLoader.existing
@@ -53,7 +53,7 @@ object bootstrap {
       try
         pre.existingBuild.buildFile.forceGet.map { buildFile =>
           val resolver = resolverFactory(pre, config, buildFile)
-          val build = rewrites.foldLeft[model.Build](model.Build.FileBacked(buildFile)) { case (b, rewrite) => rewrite(b) }
+          val build = rewrites.foldLeft[model.Build](model.Build.FileBacked(buildFile)) { case (b, rewrite) => rewrite(b, pre.buildPaths) }
           val bleepExecutable = Lazy(BleepExecutable.getCommand(resolver, pre, forceJvm = false))
 
           val activeProjects: Option[Array[model.CrossProjectName]] =
@@ -61,8 +61,12 @@ object bootstrap {
             else {
               val chosen =
                 build.explodedProjects.flatMap { case (crossProjectName, p) =>
-                  val folder = pre.buildPaths.project(crossProjectName, p).dir
-                  if (folder.startsWith(pre.buildPaths.cwd)) Some(crossProjectName)
+                  val projectPaths = pre.buildPaths.project(crossProjectName, p)
+                  val underFolder = projectPaths.dir.startsWith(pre.buildPaths.cwd)
+                  def underSources = projectPaths.sourcesDirs.all.exists(_.startsWith(pre.buildPaths.cwd))
+                  def underResources = projectPaths.resourcesDirs.all.exists(_.startsWith(pre.buildPaths.cwd))
+                  val underAny = underFolder || underSources || underResources
+                  if (underAny) Some(crossProjectName)
                   else None
                 }.toArray
 

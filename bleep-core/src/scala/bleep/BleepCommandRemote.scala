@@ -1,15 +1,18 @@
 package bleep
 
 import bleep.bsp.{BleepRifleLogger, BspCommandFailed, SetupBloopRifle}
-import bleep.internal.{BspClientDisplayProgress, Throwables, TransitiveProjects}
+import bleep.internal.{logException, BspClientDisplayProgress, TransitiveProjects}
+import bloop.rifle.*
+import bloop.rifle.BloopRifleConfig.Address
+import bloop.rifle.internal.Operations
 import ch.epfl.scala.bsp4j
+import ryddig.Throwables
 
+import java.io.IOException
 import java.nio.file.Files
 import java.util
-import scala.build.bloop.{BloopServer, BloopThreads, BuildServer}
-import scala.build.blooprifle.internal.Operations
-import scala.build.blooprifle.{BloopRifleConfig, FailedToStartServerException}
 import scala.util.Try
+import scala.util.control.NonFatal
 
 abstract class BleepCommandRemote(watch: Boolean) extends BleepBuildCommand {
   def watchableProjects(started: Started): TransitiveProjects
@@ -36,7 +39,7 @@ abstract class BleepCommandRemote(watch: Boolean) extends BleepBuildCommand {
     val buildClient: BspClientDisplayProgress =
       BspClientDisplayProgress(started.logger)
 
-    val server =
+    def mkServer(retriesLeft: Int): BloopServer =
       try
         BloopServer.buildServer(
           config = bloopRifleConfig,
@@ -49,19 +52,26 @@ abstract class BleepCommandRemote(watch: Boolean) extends BleepBuildCommand {
           logger = bleepRifleLogger
         )
       catch {
-        case th: FailedToStartServerException =>
-          val readLog: Option[String] =
+        case th: IOException if retriesLeft > 0 =>
+          started.logger.withContext("message", th.getMessage).warn("Failed to connect to bloop, retrying...")
+          Thread.sleep(500)
+          mkServer(retriesLeft - 1)
+        case NonFatal(th) =>
+          throw BleepCommandRemote.FailedToStartBloop(
+            th,
             bloopRifleConfig.address match {
-              case _: BloopRifleConfig.Address.Tcp           => None
-              case ds: BloopRifleConfig.Address.DomainSocket => Try(Files.readString(ds.outputPath)).toOption
+              case _: Address.Tcp           => None
+              case ds: Address.DomainSocket => Try(Files.readString(ds.outputPath)).toOption
             }
-          throw BleepCommandRemote.FailedToStartBloop(th, readLog)
+          )
       }
+
+    val server = mkServer(10)
 
     try
       if (watch) {
         // run once initially
-        runWithServer(started, server.server)
+        runWithServer(started, server.server).discard()
 
         var currentStarted = started
 
@@ -81,7 +91,7 @@ abstract class BleepCommandRemote(watch: Boolean) extends BleepBuildCommand {
         val buildWatcher = BleepFileWatching.build(started.pre) { _ =>
           started.reloadFromDisk() match {
             case Left(bleepException) =>
-              Throwables.log("build changed, but it didn't work :(", started.logger, bleepException)
+              logException("build changed, but it didn't work :(", started.logger, bleepException)
               codeWatcher.updateMapping(Map.empty)
             case Right(None) =>
               ()
@@ -102,7 +112,7 @@ abstract class BleepCommandRemote(watch: Boolean) extends BleepBuildCommand {
           res <- buildClient.failed match {
             case empty if empty.isEmpty => Right(())
             case failed =>
-              val projects = failed.map(BleepCommandRemote.projectFromBuildTarget(started)).toArray
+              val projects = failed.flatMap(BleepCommandRemote.projectFromBuildTarget(started)).toArray
               Left(new BspCommandFailed("Failed", projects, BspCommandFailed.NoDetails))
           }
         } yield res
@@ -111,7 +121,9 @@ abstract class BleepCommandRemote(watch: Boolean) extends BleepBuildCommand {
       started.config.compileServerModeOrDefault match {
         case model.CompileServerMode.NewEachInvocation =>
           server.shutdown()
-          Operations.exit(bloopRifleConfig.address, started.buildPaths.dotBleepDir, System.out, System.err, bleepRifleLogger)
+          if (Operations.exit(bloopRifleConfig.address, started.buildPaths.dotBleepDir, System.out, System.err, bleepRifleLogger) != 0) {
+            started.logger.warn("Failed to shutdown the compile server")
+          }
           ()
         case model.CompileServerMode.Shared =>
           ()
@@ -126,7 +138,7 @@ object BleepCommandRemote {
     def onlyChangedProjects(started: Started, isChanged: model.CrossProjectName => Boolean): BleepCommandRemote
   }
 
-  case class FailedToStartBloop(cause: FailedToStartServerException, readLog: Option[String])
+  case class FailedToStartBloop(cause: Throwable, readLog: Option[String])
       extends BleepException(
         readLog.foldLeft(cause.getMessage)((msg, log) => s"$msg\nRead log file:\n$log")
       )
@@ -138,10 +150,8 @@ object BleepCommandRemote {
     new bsp4j.BuildTargetIdentifier(amended)
   }
 
-  def projectFromBuildTarget(started: Started)(name: bsp4j.BuildTargetIdentifier): model.CrossProjectName = {
-    val id = name.getUri.split("=").last
-    started.build.explodedProjects.keys.find(_.value == id).getOrElse(sys.error(s"Couldn't find project for $name"))
-  }
+  def projectFromBuildTarget(started: Started)(name: bsp4j.BuildTargetIdentifier): Option[model.CrossProjectName] =
+    started.build.explodedProjects.keys.find(_.value == name.getUri.split("=").last)
 
   def buildTargets(buildPaths: BuildPaths, projects: Array[model.CrossProjectName]): util.List[bsp4j.BuildTargetIdentifier] =
     util.List.of(projects.map(p => buildTarget(buildPaths, p)): _*)

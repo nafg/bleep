@@ -1,7 +1,6 @@
 package bleep
 package scripts
 
-import bleep.RelPath
 import bleep.nosbt.InteractionService
 import bleep.packaging.{packageLibraries, CoordinatesFor, PackagedLibrary, PublishLayout}
 import bleep.plugin.cirelease.CiReleasePlugin
@@ -23,7 +22,10 @@ object Publish extends BleepScript("Publish") {
       logger = started.logger,
       maybeCredentials = None,
       interactionService = InteractionService.DoesNotMaskYourPasswordExclamationOneOne
-    )
+    ) {
+      // pick one of the keys from `gpg --list-keys`
+      override def pgpSigningKey() = Some("0BC13EB20EDBE20BE51010A04F1C4835C3551931")
+    }
     val sonatype = new Sonatype(
       logger = started.logger,
       sonatypeBundleDirectory = started.buildPaths.dotBleepDir / "sonatype-bundle",
@@ -44,11 +46,6 @@ object Publish extends BleepScript("Publish") {
           "oyvindberg",
           "Øyvind Raddum Berg",
           "https://github.com/oyvindberg"
-        ),
-        Info.Developer(
-          "hamnis",
-          "Erlend Hamnaberg",
-          "https://github.com/hamnis"
         )
       ),
       publication = None,
@@ -75,7 +72,7 @@ object Publish extends BleepScript("Publish") {
       packagedLibraries.flatMap { case (_, PackagedLibrary(_, files)) => files.all }
 
     files.foreach { case (path, bytes) =>
-      started.logger.withContext(path)(_.asString).withContext(bytes.length).debug("will publish")
+      started.logger.withContext("path", path.asString).withContext("bytes.length", bytes.length).debug("will publish")
     }
     ciRelease.ciRelease(files)
   }

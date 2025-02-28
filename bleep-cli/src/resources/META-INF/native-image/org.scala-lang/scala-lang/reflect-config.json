@@ -28,6 +28,13 @@
     "allDeclaredFields": true
   },
   {
+    "name": "bloop.rifle.bloop4j.BloopExtraBuildParams",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
     "name": "ch.epfl.scala.bsp4j.BuildServerCapabilities",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
@@ -152,6 +159,41 @@
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
+  },  
+  {
+    "name": "ch.epfl.scala.bsp4j.DependencyModule",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "ch.epfl.scala.bsp4j.DependencyModulesDataKind",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "ch.epfl.scala.bsp4j.DependencyModulesItem",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "ch.epfl.scala.bsp4j.DependencyModulesParams",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "ch.epfl.scala.bsp4j.DependencyModulesResult",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
   },
   {
     "name": "ch.epfl.scala.bsp4j.DependencySourcesItem",
@@ -197,13 +239,6 @@
   },
   {
     "name": "ch.epfl.scala.bsp4j.DidChangeBuildTarget",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "ch.epfl.scala.bsp4j.FileChangeType",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -260,6 +295,13 @@
   },
   {
     "name": "ch.epfl.scala.bsp4j.JavacOptionsResult",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "ch.epfl.scala.bsp4j.JvmMainClass",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -483,6 +525,20 @@
     "allDeclaredFields": true
   },
   {
+    "name": "ch.epfl.scala.bsp4j.ScalaTestSuiteSelection",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "ch.epfl.scala.bsp4j.ScalaTestSuites",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
     "name": "ch.epfl.scala.bsp4j.ScalaTestParams",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
@@ -554,13 +610,6 @@
   },
   {
     "name": "ch.epfl.scala.bsp4j.StatusCode",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "ch.epfl.scala.bsp4j.TaskDataKind",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -679,14 +728,7 @@
     "allDeclaredFields": true
   },
   {
-    "name": "scala.build.bloop.BuildServer",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "scala.build.bloop.bloop4j.BloopExtraBuildParams",
+    "name": "bloop.rifle.BuildServer",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,

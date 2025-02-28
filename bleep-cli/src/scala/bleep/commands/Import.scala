@@ -1,7 +1,7 @@
 package bleep
 package commands
 
-import bleep.logging.Logger
+import ryddig.Logger
 
 import java.nio.file.Path
 
@@ -17,10 +17,10 @@ case class Import(
   override def run(): Either[BleepException, Unit] = {
     if (!options.skipSbt) {
       val resolvedJvm = fetchJvm(model.Jvm.system)
-      sbtimport.runSbt(logger, sbtBuildDir, destinationPaths, resolvedJvm)
+      sbtimport.runSbt(logger, sbtBuildDir, destinationPaths, resolvedJvm, options.sbtPath)
     }
 
-    val inputData = sbtimport.ImportInputData.collectFromFileSystem(destinationPaths)
+    val inputData = sbtimport.ImportInputData.collectFromFileSystem(destinationPaths, logger)
 
     val generatedBuildFiles = sbtimport
       .generateBuild(

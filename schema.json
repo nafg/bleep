@@ -218,19 +218,38 @@
         "jsVersion": {
           "type": "string"
         },
-        "jsMode": {
-          "type": "string",
-          "enum": [
-            "debug",
-            "release"
-          ]
-        },
         "jsKind": {
           "type": "string",
           "enum": [
             "none",
             "commonjs",
             "esmodule"
+          ]
+        },
+        "jsSplitStyle": {
+          "type": "object",
+          "properties": {
+            "splitStyle": {
+              "type": "string",
+              "enum": ["FewestModules", "SmallestModules", "SmallModulesFor"]
+            },
+            "packages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["splitStyle"],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "splitStyle": { "const": "SmallModulesFor" }
+                }
+              },
+              "then": { "required": ["packages"] }
+            }
           ]
         },
         "jsEmitSourceMaps": {
@@ -251,16 +270,58 @@
         "nativeVersion": {
           "type": "string"
         },
-        "nativeMode": {
+        "nativeBuildTarget": {
           "type": "string",
           "enum": [
-            "debug",
-            "release"
+            "application",
+            "library-dynamic",
+            "library-static"
+          ]
+        },
+        "nativeLinkerReleaseMode": {
+          "type": "string",
+          "enum": [
+            "release-fast",
+            "release-size",
+            "release-full"
+          ]
+        },
+        "nativeLTO": {
+          "type": "string",
+          "enum": [
+            "none",
+            "thin",
+            "full"
           ]
         },
         "nativeGc": {
           "type": "string"
+        },
+        "nativeMultithreading": {
+          "type": "boolean"
+        },
+        "nativeOptimize": {
+          "type": "boolean"
+        },
+        "nativeEmbedResources": {
+          "type": "boolean"
+        },
+        "nativeUseIncrementalCompilation": {
+          "type": "boolean"
         }
+      },
+      "dependencies": {
+        "jsSplitStyle": ["jsKind"]
+      },
+      "if": {
+        "properties": {
+          "name": { "const": "js" },
+          "jsKind": { "const": "esmodule" }
+        },
+        "required": ["name", "jsKind"]
+      },
+      "then": {
+        "required": ["jsSplitStyle"]
       }
     },
     "CompileSetup": {
@@ -300,7 +361,7 @@
         },
         "index": {
           "description": "the default index is the coursier index, located at https://github.com/coursier/jvm-index/raw/master/index.json . If you need to use a JVM which is not there, you can specify another index here",
-          "type": "boolean"
+          "type": "string"
         }
       },
       "required": [

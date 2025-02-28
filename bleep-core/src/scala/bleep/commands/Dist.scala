@@ -3,9 +3,9 @@ package commands
 
 import bleep.internal.TransitiveProjects
 import bleep.packaging.dist
+import bloop.rifle.BuildServer
 
 import java.nio.file.Path
-import scala.build.bloop.BuildServer
 
 object Dist {
   case class Options(

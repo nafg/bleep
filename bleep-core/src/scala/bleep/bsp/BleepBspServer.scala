@@ -1,22 +1,22 @@
 package bleep
 package bsp
 
-import bleep.internal.{DoSourceGen, Throwables, TransitiveProjects}
-import bleep.logging.Logger
+import bleep.internal.{DoSourceGen, TransitiveProjects}
+import bloop.rifle.BuildServer
+import bloop.rifle.internal.BuildInfo
 import ch.epfl.scala.bsp4j
 import ch.epfl.scala.bsp4j.CompileResult
 import com.google.gson.{JsonObject, JsonPrimitive}
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.jsonrpc.messages.{ResponseError, ResponseErrorCode}
+import ryddig.{Logger, Throwables}
 
 import java.util
 import java.util.concurrent.{CompletableFuture, TimeUnit}
 import java.util.function.BiFunction
-import scala.build.bloop.BuildServer
-import scala.build.blooprifle.internal.Constants
 import scala.concurrent.{Future, Promise}
 import scala.jdk.CollectionConverters.*
-import scala.util.Random
+import scala.util.{Random, Try}
 
 class BleepBspServer(
     val logger: Logger,
@@ -38,7 +38,7 @@ class BleepBspServer(
   }
 
   protected def onFatalError(throwable: Throwable, context: String): Nothing = {
-    error(s"Fatal error has occurred within $context. Shutting down the server", throwable)
+    error(s"Shutting down Bleep after encountering fatal error within $context", throwable)
 
     // wait random bit before shutting down server to reduce risk of multiple bleep instances starting bloop at the same time
     val timeout = Random.nextInt(400)
@@ -81,7 +81,7 @@ class BleepBspServer(
       case Left(th) =>
         warn("couldn't refresh the build", th)
         CompletableFuture.failedFuture(
-          new ResponseErrorException(new ResponseError(ResponseErrorCode.serverErrorEnd, "couldn't refresh the build", new Object))
+          new ResponseErrorException(new ResponseError(ResponseErrorCode.jsonrpcReservedErrorRangeEnd, "couldn't refresh the build", new Object))
         )
       case Right(started) =>
         val workspaceDir = started.buildPaths.buildVariantDir
@@ -89,7 +89,7 @@ class BleepBspServer(
         val initParams = new bsp4j.InitializeBuildParams(
           s"bleep / ${params.getDisplayName}",
           s"${model.BleepVersion.current.value} / ${params.getVersion}",
-          Constants.bspVersion,
+          BuildInfo.bspVersion,
           workspaceDir.toUri.toASCIIString,
           new bsp4j.BuildClientCapabilities(supportedLanguages)
         )
@@ -116,7 +116,7 @@ class BleepBspServer(
           .handle(fatalExceptionHandler("buildInitialize", initParams))
           .thenApply { _ =>
             bloopServer.onBuildInitialized()
-            new bsp4j.InitializeBuildResult("bleep", model.BleepVersion.current.value, Constants.bspVersion, capabilities)
+            new bsp4j.InitializeBuildResult("bleep", model.BleepVersion.current.value, BuildInfo.bspVersion, capabilities)
           }
     }
   }
@@ -128,7 +128,7 @@ class BleepBspServer(
       case Left(th) =>
         warn("Couldn't refresh the build", th)
         CompletableFuture.failedFuture(
-          new ResponseErrorException(new ResponseError(ResponseErrorCode.serverErrorEnd, "couldn't refresh the build", new Object))
+          new ResponseErrorException(new ResponseError(ResponseErrorCode.jsonrpcReservedErrorRangeEnd, "couldn't refresh the build", new Object))
         )
       case Right(_) =>
         bloopServer.workspaceBuildTargets().handle(fatalExceptionHandler("workspaceBuildTargets"))
@@ -165,7 +165,12 @@ class BleepBspServer(
         warn(s"bleep was not able to refresh the build", bleepException)
         CompletableFuture.completedFuture[CompileResult](new CompileResult(bsp4j.StatusCode.ERROR))
       case Right(started) =>
-        val projects = params.getTargets.asScala.toArray.map(BleepCommandRemote.projectFromBuildTarget(started))
+        val projects = params.getTargets.asScala.toArray.flatMap { target =>
+          BleepCommandRemote.projectFromBuildTarget(started)(target).orElse {
+            logger.warn(s"Couldn't find project for target ${target.getUri}. Bleep may have picked up a change you IDE hasn't. Try to reload the build.")
+            None
+          }
+        }
 
         DoSourceGen(started, bloopServer, TransitiveProjects(started.build, projects)) match {
           case Left(bleepException) =>
@@ -229,13 +234,13 @@ class BleepBspServer(
     logger.debug(("buildTargetOutputPaths", params.toString))
     bloopServer.buildTargetOutputPaths(params).handle(fatalExceptionHandler("buildTargetOutputPaths", params))
   }
-  override def jvmRunEnvironment(params: bsp4j.JvmRunEnvironmentParams): CompletableFuture[bsp4j.JvmRunEnvironmentResult] = {
+  override def buildTargetJvmRunEnvironment(params: bsp4j.JvmRunEnvironmentParams): CompletableFuture[bsp4j.JvmRunEnvironmentResult] = {
     logger.debug(("jvmRunEnvironment", params.toString))
-    bloopServer.jvmRunEnvironment(params).handle(fatalExceptionHandler("jvmRunEnvironment", params))
+    bloopServer.buildTargetJvmRunEnvironment(params).handle(fatalExceptionHandler("jvmRunEnvironment", params))
   }
-  override def jvmTestEnvironment(params: bsp4j.JvmTestEnvironmentParams): CompletableFuture[bsp4j.JvmTestEnvironmentResult] = {
+  override def buildTargetJvmTestEnvironment(params: bsp4j.JvmTestEnvironmentParams): CompletableFuture[bsp4j.JvmTestEnvironmentResult] = {
     logger.debug(("jvmTestEnvironment", params.toString))
-    bloopServer.jvmTestEnvironment(params).handle(fatalExceptionHandler("jvmTestEnvironment", params))
+    bloopServer.buildTargetJvmTestEnvironment(params).handle(fatalExceptionHandler("jvmTestEnvironment", params))
   }
 
   private val shutdownPromise = Promise[Unit]()
@@ -244,7 +249,7 @@ class BleepBspServer(
     logger.debug("buildShutdown")
     if (!shutdownPromise.isCompleted)
       shutdownPromise.success(())
-    bloopServer.buildShutdown()
+    Try(bloopServer.buildShutdown()).getOrElse(null)
   }
 
   override def onBuildExit(): Unit = {

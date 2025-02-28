@@ -3,9 +3,8 @@ package commands
 
 import bleep.bsp.BspCommandFailed
 import bleep.internal.{DoSourceGen, TransitiveProjects}
+import bloop.rifle.BuildServer
 import ch.epfl.scala.bsp4j
-
-import scala.build.bloop.BuildServer
 
 case class Compile(watch: Boolean, projects: Array[model.CrossProjectName]) extends BleepCommandRemote(watch) with BleepCommandRemote.OnlyChanged {
 

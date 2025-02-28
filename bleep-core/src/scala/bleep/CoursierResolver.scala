@@ -3,7 +3,6 @@ package bleep
 import bleep.depcheck.CheckEvictions
 import bleep.internal.codecs.*
 import bleep.internal.{FileUtils, ShortenAndSortJson}
-import bleep.logging.Logger
 import coursier.cache.{CacheDefaults, FileCache}
 import coursier.core.*
 import coursier.error.CoursierError
@@ -14,6 +13,7 @@ import coursier.util.{Artifact, Task}
 import coursier.{Artifacts, Fetch, Resolution}
 import io.circe.*
 import io.circe.syntax.*
+import ryddig.Logger
 
 import java.io.File
 import java.nio.file.{Files, Path}
@@ -21,6 +21,10 @@ import scala.collection.immutable.SortedSet
 
 trait CoursierResolver {
   val params: CoursierResolver.Params
+  def withParams(newParams: CoursierResolver.Params): CoursierResolver
+
+  final def updatedParams(f: CoursierResolver.Params => CoursierResolver.Params): CoursierResolver =
+    withParams(f(params))
 
   // uncached, raw result from coursier
   def direct(
@@ -169,6 +173,9 @@ object CoursierResolver {
     val fileCache = FileCache[Task](params.overrideCacheFolder.getOrElse(CacheDefaults.location)).withLogger(cacheLogger)
     val repos = coursierRepos(params.repos, params.authentications)
 
+    override def withParams(newParams: Params): CoursierResolver =
+      new Direct(logger, cacheLogger, newParams)
+
     override def direct(
         bleepDeps: SortedSet[model.Dep],
         versionCombo: model.VersionCombo,
@@ -229,6 +236,10 @@ object CoursierResolver {
   // this is a performance cache, the real cache is the coursier folder
   private class Cached(logger: Logger, underlying: CoursierResolver, in: Path) extends CoursierResolver {
     override val params = underlying.params
+
+    override def withParams(newParams: Params): CoursierResolver =
+      new Cached(logger, underlying.withParams(newParams), in)
+
     override def resolve(
         deps: SortedSet[model.Dep],
         versionCombo: model.VersionCombo,
@@ -257,7 +268,7 @@ object CoursierResolver {
           case Some(value) => Right(value)
           case None =>
             val depNames = deps.map(_.baseModuleName.value)
-            val ctxLogger = logger.withContext(cachePath).withContext(depNames).withContext(versionCombo.toString)
+            val ctxLogger = logger.withContext("cachePath", cachePath).withContext("depNames", depNames).withContext("versionCombo", versionCombo.toString)
             ctxLogger.debug(s"coursier cache miss")
             underlying.resolve(deps, versionCombo, libraryVersionSchemes).map {
               case changingResult if changingResult.fullDetailedArtifacts.exists { case (_, _, artifact, _) => artifact.changing } =>
@@ -305,6 +316,10 @@ object CoursierResolver {
 
   class TemplatedVersions(underlying: CoursierResolver, maybeWantedBleepVersion: Option[model.BleepVersion]) extends CoursierResolver {
     override val params = underlying.params
+
+    override def withParams(newParams: Params): CoursierResolver =
+      new TemplatedVersions(underlying.withParams(newParams), maybeWantedBleepVersion)
+
     override def resolve(
         deps: SortedSet[model.Dep],
         versionCombo: model.VersionCombo,

@@ -29,7 +29,7 @@ class CreateNewSnapshotTests extends SnapshotTest {
           testResolver
         ).genAllFiles(buildPaths)
 
-      writeAndCompare(buildPaths.buildDir, generatedProjectFiles, logger)
+      writeAndCompare(buildPaths.buildDir, generatedProjectFiles, logger).discard()
 
       val bootstrappedPath = testFolder / "bootstrapped"
       val bootstrappedDestinationPaths = BuildPaths(cwd = FileUtils.TempDir, BuildLoader.inDirectory(bootstrappedPath), model.BuildVariant.Normal)

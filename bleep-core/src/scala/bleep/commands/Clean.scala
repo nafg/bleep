@@ -1,7 +1,6 @@
 package bleep
 package commands
 
-import bleep.BleepException
 import bleep.internal.FileUtils
 
 import java.nio.file.{Files, Path}
@@ -31,7 +30,7 @@ case class Clean(projects: Array[model.CrossProjectName]) extends BleepBuildComm
           cmd = List(Array("rm", "-Rf"), outDirectories.map(_.toString)).flatten,
           logger = started.logger,
           out = cli.Out.ViaLogger(started.logger)
-        )
+        ).discard()
         outDirectories.foreach(directory => started.logger.info(s"Deleted $directory"))
       }
     }

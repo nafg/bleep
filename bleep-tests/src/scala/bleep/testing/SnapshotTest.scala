@@ -1,18 +1,18 @@
 package bleep
 package testing
 
-import bleep.logging.{LogLevel, Logger, Loggers}
 import coursier.paths.CoursierPaths
 import org.scalactic.TripleEqualsSupport
 import org.scalatest.Assertion
 import org.scalatest.funsuite.AnyFunSuite
+import ryddig.{LogLevel, LogPatterns, Logger, Loggers}
 
 import java.nio.file.{Files, Path, Paths}
 import java.time.Instant
 import scala.util.Properties
 
 trait SnapshotTest extends AnyFunSuite with TripleEqualsSupport {
-  val logger0 = Loggers.stdout(LogPatterns.interface(Some(Instant.now), noColor = false), disableProgress = true).untyped.unsafeGet().minLogLevel(LogLevel.info)
+  val logger0 = Loggers.stdout(LogPatterns.interface(Some(Instant.now), noColor = false), disableProgress = true).acquire().value.withMinLogLevel(LogLevel.info)
 
   val isCi: Boolean =
     sys.env.contains("BUILD_NUMBER") || sys.env.contains("CI") // from sbt
@@ -38,14 +38,14 @@ trait SnapshotTest extends AnyFunSuite with TripleEqualsSupport {
     )
 
   def writeAndCompare(in: Path, fileMap: Map[Path, String], logger: Logger): Assertion = {
-    FileSync.syncPaths(in, fileMap, deleteUnknowns = FileSync.DeleteUnknowns.Yes(maxDepth = None), soft = true)
+    FileSync.syncPaths(in, fileMap, deleteUnknowns = FileSync.DeleteUnknowns.Yes(maxDepth = None), soft = true).discard()
 
     var from = in
     while (!Files.isDirectory(from))
       from = from.getParent
 
     GitLock.synchronized {
-      cli("git add", from, List("/usr/bin/git", "add", in.toString), logger, out = cli.Out.ViaLogger(logger), env = List(("PATH", sys.env("PATH"))))
+      cli("git add", from, List("/usr/bin/git", "add", in.toString), logger, out = cli.Out.ViaLogger(logger), env = List(("PATH", sys.env("PATH")))).discard()
     }
 
     if (Properties.isWin) succeed // let's deal with this later
@@ -58,7 +58,7 @@ trait SnapshotTest extends AnyFunSuite with TripleEqualsSupport {
           logger,
           out = cli.Out.ViaLogger(logger),
           env = List(("PATH", sys.env("PATH")))
-        )
+        ).discard()
       }
       succeed
     } else succeed

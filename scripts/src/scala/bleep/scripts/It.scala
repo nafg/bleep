@@ -2,8 +2,8 @@ package bleep
 package scripts
 
 import bleep.internal.FileUtils
-import bleep.logging.Logger
 import bleep.plugin.nativeimage.NativeImagePlugin
+import ryddig.Logger
 
 import java.nio.file.{Files, Path}
 import scala.concurrent.duration.Duration
@@ -12,7 +12,7 @@ import scala.jdk.StreamConverters.StreamHasToScala
 
 object It extends BleepScript("It") {
   override def run(started: Started, commands: Commands, args: List[String]): Unit = {
-    val project = started.bloopProject(model.CrossProjectName(model.ProjectName("bleep-cli"), crossId = Some(model.CrossId("jvm213"))))
+    val project = started.bloopProject(model.CrossProjectName(model.ProjectName("bleep-cli"), crossId = Some(model.CrossId("jvm3"))))
     val ni = new NativeImagePlugin(project, started.logger, started.jvmCommand)
 
     val nativeImage = {
@@ -37,15 +37,16 @@ object It extends BleepScript("It") {
     val env = sys.env.updated("BAT_PAGER", "")
     implicit val ec: ExecutionContext = started.executionContext
 
-    Await.result(
-      Future.sequence(
-        Demo.all
-          .filterNot(_.name == "import") // todo: iterate more on integration test concept. sbt import hangs in CI and would be slow anyway
-          .map(demo => Future(runDemo(nativeImage, demo, env.toList, started.logger.withPath(demo.name))))
-      ),
-      Duration.Inf
-    )
-    ()
+    Await
+      .result(
+        Future.sequence(
+          Demo.all
+            .filterNot(_.name == "import") // todo: iterate more on integration test concept. sbt import hangs in CI and would be slow anyway
+            .map(demo => Future(runDemo(nativeImage, demo, env.toList, started.logger.withPath(demo.name))))
+        ),
+        Duration.Inf
+      )
+      .discard()
   }
 
   def runDemo(bleep: Path, demo: Demo, env: List[(String, String)], logger: Logger): Unit = {
@@ -63,8 +64,7 @@ object It extends BleepScript("It") {
       case cd if cd.startsWith("cd") =>
         workDir = workDir / cd.drop("cd ".length)
       case line =>
-        cli(action.getOrElse(line), workDir, cmd = line.split("\\s").toList, logger = logger, out = cli.Out.ViaLogger(logger), env = env)
-        ()
+        cli(action.getOrElse(line), workDir, cmd = line.split("\\s").toList, logger = logger, out = cli.Out.ViaLogger(logger), env = env).discard()
     }
 
     FileUtils.deleteDirectory(tempDir)

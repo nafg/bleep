@@ -1,12 +1,17 @@
 package bleep
 package sbtimport
 
-import bleep.model.Jvm
 import cats.data.{Validated, ValidatedNel}
 import cats.syntax.apply.*
 import com.monovore.decline.{Argument, Opts}
 
-case class ImportOptions(ignoreWhenInferringTemplates: Set[model.ProjectName], skipSbt: Boolean, skipGeneratedResourcesScript: Boolean, jvm: model.Jvm)
+case class ImportOptions(
+    ignoreWhenInferringTemplates: Set[model.ProjectName],
+    skipSbt: Boolean,
+    skipGeneratedResourcesScript: Boolean,
+    jvm: model.Jvm,
+    sbtPath: Option[String]
+)
 
 object ImportOptions {
   val ignoreWhenInferringTemplates: Opts[Set[model.ProjectName]] = Opts
@@ -25,8 +30,8 @@ object ImportOptions {
   val skipGeneratedResourcesScript: Opts[Boolean] =
     Opts.flag("skip-generated-resources-script", "disable creating a script to regenerate discovered generated sources/resources ").orFalse
 
-  implicit val jvmArgument: Argument[model.Jvm] = new Argument[Jvm] {
-    override def read(string: String): ValidatedNel[String, Jvm] = Validated.Valid(model.Jvm(string, None))
+  implicit val jvmArgument: Argument[model.Jvm] = new Argument[model.Jvm] {
+    override def read(string: String): ValidatedNel[String, model.Jvm] = Validated.Valid(model.Jvm(string, None))
     override def defaultMetavar: String = "metavar-jvm"
   }
 
@@ -36,6 +41,11 @@ object ImportOptions {
       .withDefault(Some(model.Jvm.system))
       .map(_.get)
 
+  val sbtPath: Opts[Option[String]] =
+    Opts
+      .option[String]("sbt-path", "optional path to sbt executable if sbt provided by coursier can not be used.")
+      .orNone
+
   val opts: Opts[ImportOptions] =
-    (ignoreWhenInferringTemplates, skipSbt, skipGeneratedResourcesScript, jvm).mapN(ImportOptions.apply)
+    (ignoreWhenInferringTemplates, skipSbt, skipGeneratedResourcesScript, jvm, sbtPath).mapN(ImportOptions.apply)
 }

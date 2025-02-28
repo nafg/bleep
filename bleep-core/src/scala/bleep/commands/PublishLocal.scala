@@ -2,10 +2,10 @@ package bleep
 package commands
 
 import bleep.internal.TransitiveProjects
-import bleep.packaging.{packageLibraries, CoordinatesFor, PackagedLibrary, PublishLayout}
+import bleep.packaging.*
+import bloop.rifle.BuildServer
 
 import java.nio.file.Path
-import scala.build.bloop.BuildServer
 import scala.collection.immutable.SortedMap
 
 object PublishLocal {
@@ -24,7 +24,13 @@ object PublishLocal {
     override val publishLayout: PublishLayout = PublishLayout.Maven()
   }
 
-  case class Options(groupId: String, version: String, publishTarget: PublishLocal.PublishTarget, projects: Array[model.CrossProjectName])
+  case class Options(
+      groupId: String,
+      version: String,
+      publishTarget: PublishLocal.PublishTarget,
+      projects: Array[model.CrossProjectName],
+      manifestCreator: ManifestCreator
+  )
 }
 
 case class PublishLocal(watch: Boolean, options: PublishLocal.Options) extends BleepCommandRemote(watch) with BleepCommandRemote.OnlyChanged {
@@ -41,7 +47,8 @@ case class PublishLocal(watch: Boolean, options: PublishLocal.Options) extends B
           started,
           coordinatesFor = CoordinatesFor.Default(groupId = options.groupId, version = options.version),
           shouldInclude = options.projects.toSet,
-          publishLayout = options.publishTarget.publishLayout
+          publishLayout = options.publishTarget.publishLayout,
+          manifestCreator = options.manifestCreator
         )
 
       packagedLibraries.foreach { case (projectName, PackagedLibrary(_, files)) =>
@@ -52,7 +59,7 @@ case class PublishLocal(watch: Boolean, options: PublishLocal.Options) extends B
             deleteUnknowns = FileSync.DeleteUnknowns.No,
             soft = false
           )
-          .log(started.logger.withContext(projectName).withContext("version", options.version), "Published locally")
+          .log(started.logger.withContext("projectName", projectName.value).withContext("version", options.version), "Published locally")
       }
       ()
     }

@@ -71,7 +71,7 @@ object dist {
       case _ => ()
     }
 
-    started.logger.withContext(distDir).info("dist complete")
+    started.logger.withContext("distDir", distDir).info("dist complete")
     ()
   }
 
@@ -103,7 +103,7 @@ object dist {
        |APP_CLASSPATH="$APP_BASE/lib/*"
        |JAVA_OPTS="$JAVA_OPTS @@jvmOptions@@"
        |
-       |exec java $JAVA_OPTS -cp "$APP_CLASSPATH" -Dapp.base="$APP_BASE" -Dapp.home="$APP_HOME" @@mainClass@@ $@
+       |exec java $JAVA_OPTS -cp "$APP_CLASSPATH" -Dapp.base="$APP_BASE" -Dapp.home="$APP_HOME" @@mainClass@@ "$@"
        |""".stripMargin.replace("@@jvmOptions@@", jvmOptions).replace("@@mainClass@@", mainClass)
 
   private def distBatScript(jvmOptions: String, mainClass: String): String =

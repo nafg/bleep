@@ -1,8 +1,7 @@
 package bleep
 package commands
 
-import bleep.BleepException
-import bleep.logging.Logger
+import ryddig.Logger
 
 case class CompileServerSetMode(logger: Logger, userPaths: UserPaths, mode: model.CompileServerMode) extends BleepCommand {
   override def run(): Either[BleepException, Unit] =

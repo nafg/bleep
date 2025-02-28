@@ -6,7 +6,7 @@ import bloop.config.{Config, ConfigCodecs}
 import com.github.plokhotnyuk.jsoniter_scala.core.{writeToString, WriterConfig}
 import coursier.Classifier
 import coursier.core.{Configuration, Extension}
-import io.github.davidgregory084.{DevMode, TpolecatPlugin}
+import org.typelevel.sbt.tpolecat.{DevMode, TpolecatPlugin}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -211,13 +211,14 @@ object GenBloopFiles {
           Config.Platform.Js(
             Config.JsConfig(
               version = require(platform.jsVersion, "version").scalaJsVersion,
-              mode = platform.jsMode.fold(Config.JsConfig.empty.mode)(conversions.linkerMode.from),
+              mode = Config.LinkerMode.Debug,
               kind = platform.jsKind.fold(Config.JsConfig.empty.kind)(conversions.moduleKindJS.from),
               emitSourceMaps = platform.jsEmitSourceMaps.getOrElse(Config.JsConfig.empty.emitSourceMaps),
               jsdom = platform.jsJsdom,
               output = None,
               nodePath = platform.jsNodeVersion.map(pre.fetchNode.apply),
-              toolchain = Nil
+              toolchain = Nil,
+              moduleSplitStyle = platform.jsSplitStyle.map(conversions.moduleSplitStyleJS.from)
             ),
             platform.mainClass
           )
@@ -234,10 +235,20 @@ object GenBloopFiles {
           )
         case model.Platform.Native(platform @ _) =>
           val empty = Config.NativeConfig.empty
+          val nativeModeAndLTO = Config.NativeModeAndLTO.empty.copy(
+            nativeLinkerReleaseMode = platform.nativeLinkerReleaseMode.map(conversions.nativeLinkerReleaseMode.from),
+            lto = platform.nativeLTO.map(conversions.nativeLTO.from)
+          )
+          val nativeFlags = Config.NativeFlags.empty.copy(
+            multithreading = platform.nativeMultithreading,
+            optimize = platform.nativeOptimize.getOrElse(true),
+            useIncrementalCompilation = platform.nativeUseIncrementalCompilation.getOrElse(true),
+            embedResources = platform.nativeEmbedResources.getOrElse(false)
+          )
           Config.Platform.Native(
             config = Config.NativeConfig(
               version = require(platform.nativeVersion, "version").scalaNativeVersion,
-              mode = require(platform.nativeMode.map(conversions.linkerMode.from), "nativeMode"),
+              mode = Config.LinkerMode.Debug,
               gc = require(platform.nativeGc, "nativeGc"),
               targetTriple = empty.targetTriple,
               clang = empty.clang,
@@ -247,7 +258,10 @@ object GenBloopFiles {
               linkStubs = empty.linkStubs,
               check = empty.check,
               dump = empty.dump,
-              output = empty.output
+              output = empty.output,
+              buildTarget = platform.nativeBuildTarget.map(conversions.nativeBuildTarget.from),
+              nativeModeAndLTO = nativeModeAndLTO,
+              nativeFlags = nativeFlags
             ),
             platform.mainClass
           )
@@ -376,7 +390,8 @@ object GenBloopFiles {
           options = templateDirs.fill.opts(scalacOptions).render,
           jars = resolvedScalaCompiler,
           analysis = Some(projectPaths.incrementalAnalysis),
-          setup = Some(setup)
+          setup = Some(setup),
+          bridgeJars = None
         )
       }
 

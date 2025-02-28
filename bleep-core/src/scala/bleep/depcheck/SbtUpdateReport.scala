@@ -1,12 +1,12 @@
 package bleep.depcheck
 
-import bleep.logging.Logger
 import bleep.nosbt.librarymanagement
 import coursier.cache.CacheUrl
-import coursier.core.{Classifier, Configuration, Extension, Publication, Type}
+import coursier.core.*
 import coursier.maven.MavenAttributes
 import coursier.util.Artifact
 import coursier.{Attributes, Dependency, Module, Project, Resolution}
+import ryddig.Logger
 
 import java.io.File
 import java.util.GregorianCalendar
@@ -206,7 +206,7 @@ object SbtUpdateReport {
     def clean(dep: Dependency): Dependency =
       dep
         .withConfiguration(Configuration.empty)
-        .withExclusions(Set.empty)
+        .withMinimizedExclusions(MinimizedExclusions.zero)
         .withOptional(false)
 
     def lookupProject(mv: coursier.core.Resolution.ModuleVersion): Option[Project] =
