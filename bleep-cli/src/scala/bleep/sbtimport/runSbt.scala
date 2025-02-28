@@ -2,7 +2,7 @@ package bleep
 package sbtimport
 
 import bleep.internal.FileUtils
-import bleep.logging.Logger
+import ryddig.Logger
 
 import java.nio.file.{Files, Path}
 import scala.collection.immutable.SortedMap
@@ -16,10 +16,12 @@ object runSbt {
     *
     * I'm sure it's possible to do the same thing from within sbt and only launch it first, but you know. it's not at all easy.
     */
-  def apply(logger: Logger, sbtBuildDir: Path, destinationPaths: BuildPaths, jvm: ResolvedJvm): Unit = {
-    val fetchSbt = new FetchSbt(new BleepCacheLogger(logger), ExecutionContext.global)
+  def apply(logger: Logger, sbtBuildDir: Path, destinationPaths: BuildPaths, jvm: ResolvedJvm, providedSbtPath: Option[String]): Unit = {
     val version = readSbtVersionFromFile(sbtBuildDir).getOrElse("1.8.0")
-    val sbtPath = fetchSbt(version)
+    val sbtPath = providedSbtPath.getOrElse {
+      val fetchSbt = new FetchSbt(new BleepCacheLogger(logger), ExecutionContext.global)
+      fetchSbt(version)
+    }
     def sbtCommands(cmds: Iterable[String]) =
       cli.In.Provided(cmds.mkString("", "\n", "\nexit\n").getBytes)
 
@@ -61,9 +63,9 @@ object runSbt {
     allProjectNamesByBuild.foreach { case ( /* shadow*/ sbtBuildDir, projectNames) =>
       // ask for all (cross) scala versions for these projects
       val scalaVersionOutput: ScalaVersionOutput = {
-        logger.withContext(sbtBuildDir).info("Calling sbt to discover cross projects...")
+        logger.withContext("sbtBuildDir", sbtBuildDir).info("Calling sbt to discover cross projects...")
         val cmds = projectNames.map(p => s"show $p/scalaVersion $p/crossScalaVersions")
-        logger.withContext(sbtBuildDir).debug(cmds)
+        logger.withContext("sbtBuildDir", sbtBuildDir).debug(cmds)
 
         val output =
           cli(
@@ -123,8 +125,8 @@ object runSbt {
           scalaVersionOutput.crossVersions.flatMap { case (scalaVersion, projects) => argsFor(scalaVersion, projects, switchScalaVersion = true) }
       }
 
-      logger.withContext(sbtBuildDir).info("Calling sbt to export cross projects...")
-      logger.withContext(sbtBuildDir).debug(cmds)
+      logger.withContext("sbtBuildDir", sbtBuildDir).info("Calling sbt to export cross projects...")
+      logger.withContext("sbtBuildDir", sbtBuildDir).debug(cmds)
 
       try
         cli(
@@ -219,18 +221,18 @@ object runSbt {
       while (i < lines.length) {
         val line = lines(i)
 
-        def handleScalaVersion(projectName: String) = {
+        def handleScalaVersion(projectName: String): Unit = {
           i = i + 1
           val nextLine = lines(i)
           val scalaVersion = model.VersionScala(nextLine.split("\\s").last)
-          scalaVersionsBuilder.getOrElseUpdate(scalaVersion, mutable.Set.empty).add(projectName)
+          scalaVersionsBuilder.getOrElseUpdate(scalaVersion, mutable.Set.empty).add(projectName).discard()
         }
 
-        def handleCrossScalaVersions(projectName: String) = {
+        def handleCrossScalaVersions(projectName: String): Unit = {
           i = i + 1
           val nextLine = lines(i)
           val versions = nextLine.dropWhile(_ != '(').drop(1).takeWhile(_ != ')').split(",").map(_.trim).filterNot(_.isEmpty)
-          versions.map { scalaVersion =>
+          versions.foreach { scalaVersion =>
             crossVersionsBuilder.getOrElseUpdate(model.VersionScala(scalaVersion), mutable.Set.empty).add(projectName)
           }
         }

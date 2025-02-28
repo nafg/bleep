@@ -1,12 +1,12 @@
 package bleep.bsp
 
-import bleep.logging.{Logger, LoggerFn}
+import bloop.rifle.BloopRifleLogger
+import ryddig.{Logger, LoggerFn}
 
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
-import bloop.rifle.BloopRifleLogger
 
-class BleepRifleLogger(logger: Logger) extends BloopRifleLogger {
+class BleepRifleLogger(val logger: Logger) extends BloopRifleLogger {
   val bloopLogger = logger.withPath("bloop")
   val bloopRifleLogger = logger.withPath("bloop-rifle")
 
@@ -18,6 +18,9 @@ class BleepRifleLogger(logger: Logger) extends BloopRifleLogger {
       case Some(th) => bloopRifleLogger.debug(msg, th)
       case None     => bloopRifleLogger.debug(msg)
     }
+
+  override def debug(msg: => String): Unit =
+    bloopRifleLogger.debug(msg)
 
   override def error(msg: => String, ex: Throwable): Unit = bloopRifleLogger.error(msg)
   override def error(msg: => String): Unit = {

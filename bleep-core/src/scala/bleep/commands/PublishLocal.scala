@@ -2,12 +2,11 @@ package bleep
 package commands
 
 import bleep.internal.TransitiveProjects
-import bleep.packaging.{packageLibraries, CoordinatesFor, PackagedLibrary, PublishLayout}
+import bleep.packaging.*
+import bloop.rifle.BuildServer
 
 import java.nio.file.Path
-import bloop.rifle.BuildServer
 import scala.collection.immutable.SortedMap
-import bleep.packaging.ManifestCreator
 
 object PublishLocal {
   sealed trait PublishTarget {
@@ -60,7 +59,7 @@ case class PublishLocal(watch: Boolean, options: PublishLocal.Options) extends B
             deleteUnknowns = FileSync.DeleteUnknowns.No,
             soft = false
           )
-          .log(started.logger.withContext(projectName).withContext("version", options.version), "Published locally")
+          .log(started.logger.withContext("projectName", projectName.value).withContext("version", options.version), "Published locally")
       }
       ()
     }

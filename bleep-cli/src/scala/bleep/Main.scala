@@ -1,19 +1,18 @@
 package bleep
 
 import bleep.bsp.BspImpl
-import bleep.internal.{bleepLoggers, fatal, FileUtils}
-import bleep.logging.Logger
-import bleep.model.{BleepVersion, Os}
+import bleep.internal.{bleepLoggers, fatal, logException, FileUtils}
+import bleep.packaging.ManifestCreator
 import cats.data.NonEmptyList
 import cats.syntax.apply.*
 import cats.syntax.foldable.*
 import com.monovore.decline.*
 import coursier.jvm.Execve
+import ryddig.Logger
 
 import java.nio.file.{Path, Paths}
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Properties, Success, Try}
-import bleep.packaging.ManifestCreator
 
 object Main {
   private def isGraalvmNativeImage: Boolean =
@@ -74,6 +73,9 @@ object Main {
         .orNone
         .map(started.chosenProjects)
 
+    val projectNameNoCross: Opts[model.ProjectName] =
+      Opts.argument(metavars.projectNameNoCross)(argumentFrom(metavars.projectNameNoCross, Some(started.globs.projectNamesNoCrossMap)))
+
     val projectName: Opts[model.CrossProjectName] =
       Opts.argument(metavars.projectNameExact)(argumentFrom(metavars.projectNameExact, Some(started.globs.exactProjectMap)))
 
@@ -89,6 +91,23 @@ object Main {
         .map(_.toList.toArray.flatten)
         .orNone
         .map(started.chosenTestProjects)
+
+    val testSuitesOnly: Opts[Option[NonEmptyList[String]]] =
+      Opts
+        .options[String](
+          "only",
+          "Test only a subset of test suite class names. Class name can be fully qualified to disambiguate",
+          "o"
+        )
+        .orNone
+    val testSuitesExclude: Opts[Option[NonEmptyList[String]]] =
+      Opts
+        .options[String](
+          "exclude",
+          "Exclude specific test suite class names. Class name can be fully qualified to disambiguate. Takes precedence over --only",
+          "x"
+        )
+        .orNone
 
     val hasSourcegenProjectNames: Opts[Array[model.CrossProjectName]] =
       Opts
@@ -106,6 +125,19 @@ object Main {
 
     val watch = Opts.flag("watch", "start in watch mode", "w").orFalse
 
+    val isReleaseMode = Opts.flag("release", "force linking in release mode", "r").orFalse
+
+    val updateAsScalaSteward = Opts
+      .flag(
+        "steward",
+        "Use same upgrade strategy as Scala Steward. Updates to the latest patch version at the same minor and major version. If the dependency is already on the latest patch version, it updates to the latest minor version at the same major version. And if the dependency is already on the latest minor version, it updates to the latest major version."
+      )
+      .orFalse
+
+    val updateWithPrerelease = Opts.flag("prerelease", "Allow upgrading to prerelease version if there is any.").orFalse
+
+    val updateSingleOrgOrModule = Opts.argument[String]("The dependency to update, alternatively only the organization name can be passed")
+
     lazy val ret: Opts[BleepBuildCommand] = {
       val allCommands = List(
         List[Opts[BleepBuildCommand]](
@@ -120,11 +152,33 @@ object Main {
               Opts.subcommand("templates-reapply", "apply existing templates again")(
                 Opts(commands.BuildReapplyTemplates)
               ),
+              Opts.subcommand("project-rename", "rename project")(
+                (projectNameNoCross, Opts.argument[String]("new project name")).mapN { case (from, to) =>
+                  new commands.BuildProjectRename(from, model.ProjectName(to))
+                }
+              ),
+              Opts.subcommand("project-merge-into", "merge first project into second")(
+                (projectNameNoCross, projectNameNoCross).mapN { case (projectName, into) =>
+                  new commands.BuildProjectMergeInto(projectName, into)
+                }
+              ),
+              Opts.subcommand("projects-move", "move projects")(
+                (Opts.argument[String]("new parent folder"), projectNamesNoCross).mapN { case (parentFolder, projectNames) =>
+                  new commands.BuildProjectMove(Path.of(parentFolder).toAbsolutePath, projectNames)
+                }
+              ),
               Opts.subcommand("templates-generate-new", "throw away existing templates and infer new")(
                 Opts(commands.BuildReinferTemplates(Set.empty))
               ),
               Opts.subcommand("update-deps", "updates to newest versions of all dependencies")(
-                Opts(commands.BuildUpdateDeps)
+                (updateAsScalaSteward, updateWithPrerelease).mapN { case (sw, prerelease) =>
+                  commands.BuildUpdateDeps.apply(sw, prerelease, None)
+                }
+              ),
+              Opts.subcommand("update-dep", "update a single dependency or dependencies of a single organization to newest version(s)")(
+                (updateSingleOrgOrModule, updateAsScalaSteward, updateWithPrerelease).mapN { case (singleDep, sw, prerelease) =>
+                  commands.BuildUpdateDeps.apply(sw, prerelease, Some(singleDep))
+                }
               ),
               Opts.subcommand(
                 "move-files-into-bleep-layout",
@@ -168,12 +222,22 @@ object Main {
           Opts.subcommand("compile", "compile projects")(
             (watch, projectNames).mapN { case (watch, projectNames) => commands.Compile(watch, projectNames) }
           ),
+          Opts.subcommand("link", "link projects")(
+            (watch, projectNames, isReleaseMode).mapN { case (watch, projectNames, isReleaseMode) =>
+              commands.Link(watch, projectNames, isReleaseMode)
+            }
+          ),
           Opts.subcommand("sourcegen", "run source generators for projects")(
             (watch, hasSourcegenProjectNames).mapN { case (watch, projectNames) => commands.SourceGen(watch, projectNames) }
           ),
           Opts.subcommand("test", "test projects")(
-            (watch, testProjectNames).mapN { case (watch, projectNames) =>
-              commands.Test(watch, projectNames)
+            (watch, testProjectNames, testSuitesOnly, testSuitesExclude).mapN { case (watch, projectNames, testSuitesOnly, testSuitesExclude) =>
+              commands.Test(watch, projectNames, testSuitesOnly, testSuitesExclude)
+            }
+          ),
+          Opts.subcommand("list-tests", "list tests in projects")(
+            testProjectNames.map { projectNames =>
+              commands.ListTests(projectNames)
             }
           ),
           Opts.subcommand("run", "run project")(
@@ -248,7 +312,7 @@ object Main {
             Opts.flag("check", "ensure that all files are already formatted").orFalse.map(commands.Scalafmt.apply)
           },
           Opts.subcommand("setup-dev-script", "setup a bash script which can run the code bleep has compiled")(
-            (projectName, Opts.option[String]("--main-class", "override main class").orNone).mapN { case (projectNames, main) =>
+            (projectName, Opts.option[String]("main-class", "override main class").orNone).mapN { case (projectNames, main) =>
               new commands.SetupDevScript(started, projectNames, main)
             }
           )
@@ -317,10 +381,20 @@ object Main {
   def installTabCompletions(userPaths: UserPaths, logger: Logger): Opts[BleepCommand] =
     List(
       Opts.subcommand("install-tab-completions-bash", "Install tab completions for bash")(
-        Opts(commands.InstallBashTabCompletions(logger))
+        Opts
+          .flag("stdout", "send completion configuration to stdout")
+          .orFalse
+          .map { stdout =>
+            commands.InstallBashTabCompletions(logger, stdout)
+          }
       ),
       Opts.subcommand("install-tab-completions-zsh", "Install tab completions for zsh")(
-        Opts(commands.InstallZshTabCompletions(userPaths, logger))
+        Opts
+          .flag("stdout", "send completion configuration to stdout")
+          .orFalse
+          .map { stdout =>
+            commands.InstallZshTabCompletions(userPaths, logger, stdout)
+          }
       )
     ).foldK
 
@@ -360,7 +434,7 @@ object Main {
           case _                                => true
         }
 
-        def go(wantedVersion: BleepVersion): ExitCode = {
+        def go(wantedVersion: model.BleepVersion): ExitCode = {
           val cacheLogger = new BleepCacheLogger(logger)
 
           OsArch.current match {
@@ -368,7 +442,7 @@ object Main {
               FetchBleepRelease(wantedVersion, cacheLogger, ec, hasNativeImage) match {
                 case Left(buildException) =>
                   fatal("couldn't download bleep release", logger, buildException)
-                case Right(binaryPath) if OsArch.current.os == Os.Windows || !isGraalvmNativeImage =>
+                case Right(binaryPath) if OsArch.current.os == model.Os.Windows || !isGraalvmNativeImage =>
                   val status = scala.sys.process.Process(binaryPath.toString :: args.toList, FileUtils.cwd.toFile, sys.env.toSeq: _*).!<
                   sys.exit(status)
                 case Right(path) =>
@@ -434,7 +508,7 @@ object Main {
       case "selftest" :: Nil =>
         // checks that JNI libraries are successfully loaded
         val (commonOpts, _) = CommonOpts.parse(Nil)
-        FileWatching(bleepLoggers.stderrWarn(commonOpts).untyped, Map(FileUtils.cwd -> List(())))(println(_)).run(FileWatching.StopWhen.Immediately)
+        FileWatching(bleepLoggers.stderrWarn(commonOpts), Map(FileUtils.cwd -> List(())))(println(_)).run(FileWatching.StopWhen.Immediately)
         println("OK")
         ExitCode.Success
 
@@ -442,11 +516,11 @@ object Main {
         val (commonOpts, _) = CommonOpts.parse(args)
         val cwd = cwdFor(commonOpts)
         val buildLoader = BuildLoader.find(cwd)
-        maybeRunWithDifferentVersion(_args, bleepLoggers.stderrAll(commonOpts).untyped, buildLoader, commonOpts).andThen {
+        maybeRunWithDifferentVersion(_args, bleepLoggers.stderrAll(commonOpts), buildLoader, commonOpts).andThen {
           val buildPaths = BuildPaths(cwd, buildLoader, model.BuildVariant.BSP)
           val config = BleepConfigOps.loadOrDefault(userPaths).orThrow
 
-          bleepLoggers.stderrAndFileLogging(config, commonOpts, buildPaths).untyped.use { logger =>
+          bleepLoggers.stderrAndFileLogging(config, commonOpts, buildPaths).use { logger =>
             buildLoader.existing.map(existing => Prebootstrapped(logger, userPaths, buildPaths, existing, ec)) match {
               case Left(be) => fatal("", logger, be)
               case Right(pre) =>
@@ -466,14 +540,14 @@ object Main {
         val config = BleepConfigOps.loadOrDefault(userPaths).orThrow
 
         // initialize just stdout logger first to avoid creating log file if we're just booting a new version immediately
-        val exitCode = bleepLoggers.stdoutNoLogFile(config, commonOpts).untyped.use { logger =>
+        val exitCode = bleepLoggers.stdoutNoLogFile(config, commonOpts).use { logger =>
           maybeRunWithDifferentVersion(_args, logger, buildLoader, commonOpts)
         }
 
         exitCode.andThen {
           val buildPaths = BuildPaths(cwd, buildLoader, model.BuildVariant.Normal)
 
-          bleepLoggers.stdoutAndFileLogging(config, commonOpts, buildPaths).untyped.use { logger =>
+          bleepLoggers.stdoutAndFileLogging(config, commonOpts, buildPaths).use { logger =>
             buildLoader match {
               case noBuild: BuildLoader.NonExisting =>
                 run(noBuildOpts(logger, userPaths, buildPaths, noBuild), restArgs, logger)(_.run())
@@ -497,7 +571,7 @@ object Main {
     val (_, restArgs) = CommonOpts.parse(args)
     val cwd = cwdFor(commonOpts)
     // we can not log to stdout when completing. logger should be used sparingly
-    val stderr = bleepLoggers.stderrWarn(commonOpts).untyped
+    val stderr = bleepLoggers.stderrWarn(commonOpts)
     val buildLoader = BuildLoader.find(cwd)
     maybeRunWithDifferentVersion(_args, stderr, buildLoader, commonOpts).andThen {
 
@@ -518,7 +592,7 @@ object Main {
 
           bootstrap.from(pre, GenBloopFiles.SyncToDisk, rewrites = Nil, config, CoursierResolver.Factory.default) match {
             case Left(th) =>
-              fatal("couldn't load build", stderr, th)
+              logException("couldn't load build", stderr, th)
               Completer.Res.NoMatch
 
             case Right(started) =>

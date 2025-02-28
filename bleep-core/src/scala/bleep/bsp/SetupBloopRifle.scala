@@ -2,8 +2,8 @@ package bleep
 package bsp
 
 import bleep.internal.FileUtils
-import bleep.model.CompileServerMode
 import bloop.rifle.BloopRifleConfig
+import ryddig.Logger
 
 import java.io.File
 import java.nio.file.*
@@ -14,7 +14,7 @@ import scala.util.{Failure, Properties, Random, Success, Try}
 
 object SetupBloopRifle {
   def apply(
-      compileServerMode: CompileServerMode,
+      compileServerMode: model.CompileServerMode,
       resolvedJvm: ResolvedJvm,
       userPaths: UserPaths,
       resolver: CoursierResolver,
@@ -22,7 +22,7 @@ object SetupBloopRifle {
   ): BloopRifleConfig = {
     val default = BloopRifleConfig
       .default(
-        BloopRifleConfig.Address.DomainSocket(bspSocketFile(userPaths, compileServerMode, resolvedJvm.jvm)),
+        BloopRifleConfig.Address.DomainSocket(bspSocketFile(bleepRifleLogger.logger, userPaths, compileServerMode, resolvedJvm.jvm)),
         bloopClassPath(resolver),
         FileUtils.TempDir.toFile
       )
@@ -40,17 +40,17 @@ object SetupBloopRifle {
     model.LibraryVersionScheme.VersionScheme.Always,
     model.Dep.Scala("org.scala-lang.modules", "scala-parallel-collections", "always")
   )
-  val versionCombo = model.VersionCombo.Jvm(model.VersionScala.Scala213)
+  val versionCombo = model.VersionCombo.Jvm(model.VersionScala.Scala212)
 
-  def bloopClassPath(resolver: CoursierResolver)(bloopVersion: String): Either[BleepException, (Seq[File], Boolean)] = {
-    val dep = model.Dep.Scala("io.github.alexarchambault.bleep", "bloop-frontend", bloopVersion)
+  def bloopClassPath(resolver: CoursierResolver)(bloopVersion: String): Either[BleepException, Seq[File]] = {
+    val dep = model.Dep.Scala("ch.epfl.scala", "bloop-frontend", bloopVersion)
     resolver
       .updatedParams(_.copy(downloadSources = false))
       .resolve(Set(dep), versionCombo, libraryVersionSchemes = SortedSet(parallelCollectionAlways)) match {
       case Left(coursierError) =>
         Left(new BleepException.ResolveError(coursierError, "installing bloop"))
       case Right(value) =>
-        Right((value.jarFiles, true))
+        Right(value.jarFiles)
     }
   }
 
@@ -61,16 +61,22 @@ object SetupBloopRifle {
       val tmpDir = dir.getParent / s".${dir.getFileName}.tmp-$socketId"
       try {
         Files.createDirectories(tmpDir)
-        if (!Properties.isWin)
+        if (!Properties.isWin) {
           Files.setPosixFilePermissions(
             tmpDir,
             java.util.Set.of(PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE)
           )
-        try Files.move(tmpDir, dir, StandardCopyOption.ATOMIC_MOVE)
-        catch {
+          ()
+        }
+        try {
+          Files.move(tmpDir, dir, StandardCopyOption.ATOMIC_MOVE)
+          ()
+        } catch {
           case _: AtomicMoveNotSupportedException =>
-            try Files.move(tmpDir, dir)
-            catch {
+            try {
+              Files.move(tmpDir, dir)
+              ()
+            } catch {
               case _: FileAlreadyExistsException =>
             }
           case _: FileAlreadyExistsException =>
@@ -82,7 +88,7 @@ object SetupBloopRifle {
     }
     dir
   }
-  def bspSocketFile(userPaths: UserPaths, mode: model.CompileServerMode, jvm: model.Jvm): Path = {
+  def bspSocketFile(logger: Logger, userPaths: UserPaths, mode: model.CompileServerMode, jvm: model.Jvm): Path = {
     val somewhatRandomIdentifier = Try(ProcessHandle.current.pid) match {
       case Failure(_) =>
         val r = new Random
@@ -105,10 +111,11 @@ object SetupBloopRifle {
       case model.CompileServerMode.NewEachInvocation =>
         Runtime.getRuntime.addShutdownHook(
           new Thread("delete-bloop-bsp-named-socket") {
-            override def run() = {
-              FileUtils.deleteDirectory(socket)
-              ()
-            }
+            override def run(): Unit =
+              try FileUtils.deleteDirectory(socket)
+              catch {
+                case x: FileSystemException => logger.warn(s"Failed to delete $socket at shutdown: ${x.getMessage}")
+              }
           }
         )
 

@@ -1,10 +1,10 @@
 package bleep
 package model
 
+import io.circe.syntax.*
 import org.scalactic.TripleEqualsSupport
 import org.scalatest.Assertion
 import org.scalatest.funsuite.AnyFunSuite
-import io.circe.syntax.*
 
 class JsonTest extends AnyFunSuite with TripleEqualsSupport {
   def roundtrip(vc: VersionCombo): Assertion = {
@@ -14,9 +14,9 @@ class JsonTest extends AnyFunSuite with TripleEqualsSupport {
   }
 
   test("VersionCombo") {
-    roundtrip(VersionCombo.Jvm(VersionScala.Scala3))
-    roundtrip(VersionCombo.Js(VersionScala.Scala212, VersionScalaJs.ScalaJs1))
-    roundtrip(VersionCombo.Native(VersionScala.Scala3, VersionScalaNative.ScalaNative04))
-    roundtrip(VersionCombo.Java)
+    roundtrip(VersionCombo.Jvm(VersionScala.Scala3)).discard()
+    roundtrip(VersionCombo.Js(VersionScala.Scala212, VersionScalaJs.ScalaJs1)).discard()
+    roundtrip(VersionCombo.Native(VersionScala.Scala3, VersionScalaNative.ScalaNative04)).discard()
+    roundtrip(VersionCombo.Java).discard()
   }
 }

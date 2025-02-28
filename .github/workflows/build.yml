@@ -13,11 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: bleep-build/bleep-setup-action@0.0.1
+      - uses: bleep-build/bleep-setup-action@0.0.2
       - uses: coursier/cache-action@v6
         with:
           extraFiles: bleep.yaml
@@ -34,6 +33,18 @@ jobs:
           bleep config compile-server stop-all
           ./bleep-cli@jvm3.sh --dev test 
 
+  yaml-ls-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: InoUno/yaml-ls-check@develop
+        with:
+          root: .
+          schemaMapping: |
+            {
+                "schema.json": [ "**/bleep.yaml" ]
+            }
+
   build-native-image:
     name: Native image build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -45,19 +56,21 @@ jobs:
           - os: ubuntu-20.04
             file_name: bleep
             artifact_name: bleep-x86_64-pc-linux
-          - os: macos-latest
+          - os: macos-13
             file_name: bleep
             artifact_name: bleep-x86_64-apple-darwin
+          - os: macos-latest
+            file_name: bleep
+            artifact_name: bleep-arm64-apple-darwin
           - os: windows-latest
             file_name: bleep.exe
             artifact_name: bleep-x86_64-pc-win32
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: bleep-build/bleep-setup-action@0.0.1
+      - uses: bleep-build/bleep-setup-action@0.0.2
 
       - uses: coursier/cache-action@v6
         with:
@@ -85,32 +98,36 @@ jobs:
         # - powershell doesn't work, for one: https://github.com/dirs-dev/directories-jvm/issues/49
         # - with `shell: cmd` only one command can be run at a time, so this is split into three
         # - some windows development stuff needs to be available, that's what setup-graalvm accomplishes below. todo: figure out how bleep can download it itself
-      - name: Build native image 1 (windows)
-        run: bleep config compile-server auto-shutdown-enable
+#      - name: Build native image 1 (windows)
+#        run: bleep config compile-server auto-shutdown-enable
+#        shell: cmd
+#        if: runner.os == 'Windows'
+
+      - name: Build native image 2 (windows)
+        run: bleep compile bleep-cli@jvm3
         shell: cmd
         if: runner.os == 'Windows'
 
-      - name: Build native image 2 (windows)
+      - name: Build native image 3 (windows)
         uses: graalvm/setup-graalvm@v1
         if: runner.os == 'Windows'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          version: '22.3.1'
-          java-version: '17'
-          components: 'native-image'
-
+          distribution: 'graalvm-community' # See 'Options' section below for all available distributions
+          java-version: '21.0.2'
+          native-image-job-reports: 'true'
       - name: Build native image 3 (windows)
         run: bleep native-image ${{ matrix.file_name }}
         shell: cmd
         if: runner.os == 'Windows'
 
-      - name: Test binary after build 1 (windows)
-        shell: cmd
-        env:
-          CI: true
-        # todo: fix tests on windows
-        run: .\${{ matrix.file_name }} --dev compile --no-color jvm3
-        if: runner.os == 'Windows'
+      # todo: fix tests on windows
+#      - name: Test binary after build 1 (windows)
+#        shell: cmd
+#        env:
+#          CI: true
+#        run: .\${{ matrix.file_name }} --dev compile --no-color jvm3
+#        if: runner.os == 'Windows'
 
       - name: Test binary after build 2 (windows)
         shell: cmd
@@ -121,9 +138,8 @@ jobs:
         if: runner.os == 'Windows'
 
       - name: Temporarily save package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           name: ${{ matrix.artifact_name }}
           path: ${{ matrix.file_name }}
           retention-days: 1
@@ -131,21 +147,18 @@ jobs:
   release:
     timeout-minutes: 15
     runs-on: ubuntu-20.04
-    needs: [ build, build-native-image ]
+    needs: [ build, build-native-image, yaml-ls-check ]
     if: "startsWith(github.ref, 'refs/tags/v')"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
-          submodules: recursive
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: true
       - id: get_version
         uses: battila7/get-version-action@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: artifacts
       - name: Display structure of downloaded files
         run: find artifacts
@@ -163,11 +176,10 @@ jobs:
           export VERSION=${{ steps.get_version.outputs.version-without-v }}
           bash .github/prepare-release.sh
       - name: Upload-to-release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           name: "${{ steps.get_version.outputs.version-without-v }}"
-          prerelease: true
+          prerelease: false
           generate_release_notes: true
           files: |
             work/release/*

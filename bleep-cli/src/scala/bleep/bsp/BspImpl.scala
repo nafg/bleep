@@ -1,15 +1,14 @@
 package bleep
 package bsp
 
-import bleep.internal.Throwables
+import bleep.internal.logException
+import bloop.rifle.*
+import bloop.rifle.internal.Operations
 import ch.epfl.scala.bsp4j
 import org.eclipse.lsp4j.jsonrpc
 
 import java.net.Socket
 import java.nio.file.{Files, Path}
-import bloop.rifle.{BloopServer, BloopThreads, BuildServer}
-import bloop.rifle.internal.Operations
-import bloop.rifle.{BloopRifle, BloopRifleConfig, BloopRifleLogger, FailedToStartServerException}
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success, Try}
@@ -56,7 +55,7 @@ object BspImpl {
             BleepFileWatching
               .build(pre) { _ =>
                 buildChangeTracker.ensureBloopUpToDate() match {
-                  case Left(th) => Throwables.log("Could not reload build", pre.logger, th)
+                  case Left(th) => logException("Could not reload build", pre.logger, th)
                   case Right(_) => pre.logger.info("Loaded changed build")
                 }
               }

@@ -1,20 +1,19 @@
 package bleep
 package bsp
 
-import bleep.internal.{DoSourceGen, Throwables, TransitiveProjects}
-import bleep.logging.Logger
+import bleep.internal.{DoSourceGen, TransitiveProjects}
+import bloop.rifle.BuildServer
+import bloop.rifle.internal.BuildInfo
 import ch.epfl.scala.bsp4j
 import ch.epfl.scala.bsp4j.CompileResult
 import com.google.gson.{JsonObject, JsonPrimitive}
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.jsonrpc.messages.{ResponseError, ResponseErrorCode}
+import ryddig.{Logger, Throwables}
 
 import java.util
 import java.util.concurrent.{CompletableFuture, TimeUnit}
 import java.util.function.BiFunction
-import bloop.rifle.BuildServer
-import bloop.rifle.internal.Constants
-
 import scala.concurrent.{Future, Promise}
 import scala.jdk.CollectionConverters.*
 import scala.util.{Random, Try}
@@ -90,7 +89,7 @@ class BleepBspServer(
         val initParams = new bsp4j.InitializeBuildParams(
           s"bleep / ${params.getDisplayName}",
           s"${model.BleepVersion.current.value} / ${params.getVersion}",
-          Constants.bspVersion,
+          BuildInfo.bspVersion,
           workspaceDir.toUri.toASCIIString,
           new bsp4j.BuildClientCapabilities(supportedLanguages)
         )
@@ -117,7 +116,7 @@ class BleepBspServer(
           .handle(fatalExceptionHandler("buildInitialize", initParams))
           .thenApply { _ =>
             bloopServer.onBuildInitialized()
-            new bsp4j.InitializeBuildResult("bleep", model.BleepVersion.current.value, Constants.bspVersion, capabilities)
+            new bsp4j.InitializeBuildResult("bleep", model.BleepVersion.current.value, BuildInfo.bspVersion, capabilities)
           }
     }
   }
@@ -166,7 +165,12 @@ class BleepBspServer(
         warn(s"bleep was not able to refresh the build", bleepException)
         CompletableFuture.completedFuture[CompileResult](new CompileResult(bsp4j.StatusCode.ERROR))
       case Right(started) =>
-        val projects = params.getTargets.asScala.toArray.map(BleepCommandRemote.projectFromBuildTarget(started))
+        val projects = params.getTargets.asScala.toArray.flatMap { target =>
+          BleepCommandRemote.projectFromBuildTarget(started)(target).orElse {
+            logger.warn(s"Couldn't find project for target ${target.getUri}. Bleep may have picked up a change you IDE hasn't. Try to reload the build.")
+            None
+          }
+        }
 
         DoSourceGen(started, bloopServer, TransitiveProjects(started.build, projects)) match {
           case Left(bleepException) =>

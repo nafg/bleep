@@ -21,13 +21,14 @@ case class BuildPaths(cwd: Path, bleepYamlFile: Path, variant: model.BuildVarian
     }
     buildsDir / name
   }
-  lazy val bspProjectSelectionYaml = buildsDir / "bsp" / "project-selection.yaml"
+  lazy val localConfig: Path = dotBleepDir / "conf"
+  lazy val bspProjectSelectionYaml = localConfig / "bsp-project-selection.yaml"
 
   lazy val bleepBloopDir: Path = buildVariantDir / ".bloop"
   lazy val digestFile: Path = bleepBloopDir / "bloop-digest"
   lazy val logFile: Path = buildVariantDir / "last.log"
 
-  def bloopFile(projectName: model.CrossProjectName): Path = bleepBloopDir / (projectName.value + ".json")
+  def bloopFile(projectName: model.CrossProjectName): Path = bleepBloopDir / (projectName.value.replace('/', '-') + ".json")
 
   final def project(crossName: model.CrossProjectName, p: model.Project): ProjectPaths = {
     val dir = buildDir / p.folder.getOrElse(RelPath.force(crossName.name.value))

@@ -58,24 +58,25 @@ class IntegrationSnapshotTests extends SnapshotTest {
         if (!Files.exists(sbtBuildDir)) {
           Files.createDirectories(testFolder)
           cli(action = "git clone", cwd = testFolder, cmd = List("git", "clone", repo, sbtBuildDir.getFileName.toString), logger = logger, out = cliOut)
+            .discard()
         } else {
-          cli(action = "git fetch", cwd = sbtBuildDir, cmd = List("git", "fetch"), logger = logger, out = cliOut)
+          cli(action = "git fetch", cwd = sbtBuildDir, cmd = List("git", "fetch"), logger = logger, out = cliOut).discard()
         }
-        cli(action = "git reset", cwd = sbtBuildDir, cmd = List("git", "reset", "--hard", sha), logger = logger, out = cliOut)
+        cli(action = "git reset", cwd = sbtBuildDir, cmd = List("git", "reset", "--hard", sha), logger = logger, out = cliOut).discard()
         // fix OOM for sbt build
         Files.writeString(
           sbtBuildDir / "build.sbt",
           Files.readString(sbtBuildDir / "build.sbt").split("\n").filterNot(_.contains("scalafmtOnCompile := ")).mkString("\n")
         )
-        cli(action = "git submodule init", cwd = sbtBuildDir, cmd = List("git", "submodule", "init"), logger = logger, out = cliOut)
-        cli(action = "git submodule update", sbtBuildDir, List("git", "submodule", "update"), logger = logger, out = cliOut)
+        cli(action = "git submodule init", cwd = sbtBuildDir, cmd = List("git", "submodule", "init"), logger = logger, out = cliOut).discard()
+        cli(action = "git submodule update", sbtBuildDir, List("git", "submodule", "update"), logger = logger, out = cliOut).discard()
 
         val sbtBuildLoader = BuildLoader.inDirectory(sbtBuildDir)
         val sbtDestinationPaths = BuildPaths(cwd = FileUtils.TempDir, sbtBuildLoader, model.BuildVariant.Normal)
         val cacheLogger = new BleepCacheLogger(logger)
         val fetchJvm = new FetchJvm(Some(userPaths.resolveJvmCacheDir), cacheLogger, ExecutionContext.global)
         val fetchedJvm = fetchJvm(jvm)
-        sbtimport.runSbt(logger, sbtBuildDir, sbtDestinationPaths, fetchedJvm)
+        sbtimport.runSbt(logger, sbtBuildDir, sbtDestinationPaths, fetchedJvm, None)
 
         val inputData = sbtimport.ImportInputData.collectFromFileSystem(sbtDestinationPaths, logger)
         FileUtils.writeGzippedBytes(
@@ -97,7 +98,8 @@ class IntegrationSnapshotTests extends SnapshotTest {
 
     val importedBuildLoader = BuildLoader.inDirectory(importedPath)
     val importedDestinationPaths = BuildPaths(cwd = FileUtils.TempDir, importedBuildLoader, model.BuildVariant.Normal)
-    val importerOptions = sbtimport.ImportOptions(ignoreWhenInferringTemplates = Set.empty, skipSbt = false, skipGeneratedResourcesScript = false, jvm = jvm)
+    val importerOptions =
+      sbtimport.ImportOptions(ignoreWhenInferringTemplates = Set.empty, skipSbt = false, skipGeneratedResourcesScript = false, jvm = jvm, sbtPath = None)
 
     // generate a build file and store it
     val buildFiles: Map[Path, String] =
@@ -116,7 +118,7 @@ class IntegrationSnapshotTests extends SnapshotTest {
       importedDestinationPaths.buildDir,
       buildFiles.map { case (p, s) => (p, absolutePaths.templatize.string(s)) },
       logger
-    )
+    ).discard()
 
     val bootstrappedDestinationPaths = BuildPaths(cwd = FileUtils.TempDir, BuildLoader.inDirectory(bootstrappedPath), model.BuildVariant.Normal)
     val existingImportedBuildLoader = BuildLoader.Existing(importedBuildLoader.bleepYaml)
@@ -131,7 +133,7 @@ class IntegrationSnapshotTests extends SnapshotTest {
         GenBloopFiles.encodedFiles(bootstrappedDestinationPaths, started.bloopFiles)
 
       // further property checks to see that we haven't made any illegal rewrites
-      assertSameIshBloopFiles(inputData, started)
+      assertSameIshBloopFiles(inputData, started).discard()
 
       // flush templated bloop files to disk if local, compare to checked in if test is running in CI
       // note, keep last. locally it "succeeds" with a `pending`
@@ -175,7 +177,7 @@ class IntegrationSnapshotTests extends SnapshotTest {
         assert(
           patchedOptions(output, output.out) == patchedOptions(input, originalTargetDir),
           crossProjectName.value
-        )
+        ).discard()
 
         // assert that all source folders are conserved. currently bleep may add some. also we drop folders for generated stuff
         val target = Path.of("target")
@@ -185,7 +187,7 @@ class IntegrationSnapshotTests extends SnapshotTest {
           .filterNot(output.sources.contains)
           .filter(_.isAbsolute)
           .sorted
-        assert(lostSources.isEmpty, crossProjectName.value)
+        assert(lostSources.isEmpty, crossProjectName.value).discard()
 
         // assert that all resource folders are conserved. currently bleep may add some
         val lostResources = input.resources
@@ -194,7 +196,7 @@ class IntegrationSnapshotTests extends SnapshotTest {
           .filterNot(output.resources.getOrElse(Nil).contains)
           .filter(_.isAbsolute)
           .sorted
-        assert(lostResources.isEmpty, crossProjectName.value)
+        assert(lostResources.isEmpty, crossProjectName.value).discard()
 
         /** @param classesDirs
           *   classes directories are completely different in bleep. we may also drop projects, so no comparisons are done for these, unfortunately.
