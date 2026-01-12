@@ -49,9 +49,10 @@
       "<COURSIER>/https/repo1.maven.org/maven2/co/fs2/fs2-io_2.13/3.12.0/fs2-io_2.13-3.12.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/co/fs2/fs2-reactive-streams_2.13/3.12.0/fs2-reactive-streams_2.13-3.12.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/brotli4j/1.16.0/brotli4j-1.16.0.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-<MASKED_OS>-aarch64/1.16.0/native-<MASKED_OS>-aarch64-1.16.0.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-<MASKED_OS>-x86_64/1.16.0/native-<MASKED_OS>-x86_64-1.16.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-osx-aarch64/1.16.0/native-osx-aarch64-1.16.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-osx-x86_64/1.16.0/native-osx-x86_64-1.16.0.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-<MASKED_OS>-aarch64/1.16.0/native-<MASKED_OS>-aarch64-1.16.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-<MASKED_OS>-x86_64/1.16.0/native-<MASKED_OS>-x86_64-1.16.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/service/1.16.0/service-1.16.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/beachape/enumeratum-macros_2.13/1.7.5/enumeratum-macros_2.13-1.7.5.jar",
@@ -193,9 +194,10 @@
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-resolver-dns-native-macos/4.2.0.Final/netty-resolver-dns-native-macos-4.2.0.Final-osx-x86_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-resolver-dns/4.2.0.Final/netty-resolver-dns-4.2.0.Final.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-resolver/4.2.0.Final/netty-resolver-4.2.0.Final.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.65.Final/netty-tcnative-boringssl-static-2.0.65.Final-<MASKED_OS>-aarch_64.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.65.Final/netty-tcnative-boringssl-static-2.0.65.Final-<MASKED_OS>-x86_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.65.Final/netty-tcnative-boringssl-static-2.0.65.Final-osx-aarch_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.65.Final/netty-tcnative-boringssl-static-2.0.65.Final-osx-x86_64.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.65.Final/netty-tcnative-boringssl-static-2.0.65.Final-<MASKED_OS>-aarch_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.65.Final/netty-tcnative-boringssl-static-2.0.65.Final-<MASKED_OS>-x86_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.65.Final/netty-tcnative-boringssl-static-2.0.65.Final.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.65.Final/netty-tcnative-classes-2.0.65.Final.jar",
@@ -273,7 +275,7 @@
       "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/modules/scala-swing_2.13/3.0.0/scala-swing_2.13-3.0.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/modules/scala-xml_2.13/2.2.0/scala-xml_2.13-2.2.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-reflect/2.13.16/scala-reflect-2.13.16.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-reflect/2.13.14/scala-reflect-2.13.14.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scala-sbt/test-interface/1.0/test-interface-1.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scalactic/scalactic_2.13/3.2.18/scalactic_2.13-3.2.18.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scalatest/scalatest-compatible/3.2.18/scalatest-compatible-3.2.18.jar",
@@ -1873,12 +1875,12 @@
         {
           "organization": "org.scala-lang",
           "name": "scala-reflect",
-          "version": "2.13.16",
+          "version": "2.13.14",
           "configurations": "default",
           "artifacts": [
             {
               "name": "scala-reflect",
-              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-reflect/2.13.16/scala-reflect-2.13.16.jar"
+              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-reflect/2.13.14/scala-reflect-2.13.14.jar"
             }
           ]
         },
