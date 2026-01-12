@@ -62,7 +62,7 @@ object Compile {
                    |but $scalaLibraryArtifactName was resolved to ${module.version} by dependency management.
                    |
                    |To understand why $scalaLibraryArtifactName was upgraded, run:
-                   |  bleep evicted ${projectName.value}
+                   |  bleep build evicted ${projectName.value}
                    |
                    |To fix this issue, upgrade scala.version to ${module.version} or higher in your bleep.yaml.
                    |""".stripMargin
