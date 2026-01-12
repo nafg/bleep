@@ -33,14 +33,14 @@ templates:
   template-js:
     platform:
       jsNodeVersion: 18.4.0
-      jsVersion: 1.19.0
+      jsVersion: 1.20.2
       name: js
   template-jvm:
     platform:
       name: jvm
   template-scala-2:
     scala:
-      version: 2.13.10
+      version: 2.13.18
   template-scala-2.13-js:
     extends:
     - template-js

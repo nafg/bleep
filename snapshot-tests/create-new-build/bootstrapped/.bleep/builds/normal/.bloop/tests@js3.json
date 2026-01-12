@@ -18,13 +18,13 @@
     "classpath": [
       "<COURSIER>/https/repo1.maven.org/maven2/com/lihaoyi/fansi_sjs1_3/0.5.0/fansi_sjs1_3-0.5.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/lihaoyi/sourcecode_sjs1_3/0.4.0/sourcecode_sjs1_3-0.4.0.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-javalib/1.19.0/scalajs-javalib-1.19.0.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-library_2.13/1.19.0/scalajs-library_2.13-1.19.0.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-scalalib_2.13/2.13.16%2B1.19.0/scalajs-scalalib_2.13-2.13.16%2B1.19.0.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-test-bridge_2.13/1.19.0/scalajs-test-bridge_2.13-1.19.0.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-test-interface_2.13/1.19.0/scalajs-test-interface_2.13-1.19.0.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-javalib/1.20.2/scalajs-javalib-1.20.2.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-library_2.13/1.20.2/scalajs-library_2.13-1.20.2.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-scalalib_2.13/2.13.17%2B1.20.2/scalajs-scalalib_2.13-2.13.17%2B1.20.2.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-test-bridge_2.13/1.20.2/scalajs-test-bridge_2.13-1.20.2.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-test-interface_2.13/1.20.2/scalajs-test-interface_2.13-1.20.2.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/modules/scala-xml_sjs1_3/2.1.0/scala-xml_sjs1_3-2.1.0.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.18/scala-library-2.13.18.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_sjs1_3/3.3.1/scala3-library_sjs1_3-3.3.1.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scalactic/scalactic_sjs1_3/3.2.19/scalactic_sjs1_3-3.2.19.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scalatest/scalatest-core_sjs1_3/3.2.19/scalatest-core_sjs1_3-3.2.19.jar",
@@ -165,7 +165,7 @@
     "platform": {
       "name": "js",
       "config": {
-        "version": "1.19.0",
+        "version": "1.20.2",
         "mode": "debug",
         "kind": "none",
         "emitSourceMaps": false,
@@ -231,12 +231,12 @@
         {
           "organization": "org.scala-js",
           "name": "scalajs-scalalib_2.13",
-          "version": "2.13.16+1.19.0",
+          "version": "2.13.17+1.20.2",
           "configurations": "default",
           "artifacts": [
             {
               "name": "scalajs-scalalib_2.13",
-              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-scalalib_2.13/2.13.16%2B1.19.0/scalajs-scalalib_2.13-2.13.16%2B1.19.0.jar"
+              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-scalalib_2.13/2.13.17%2B1.20.2/scalajs-scalalib_2.13-2.13.17%2B1.20.2.jar"
             }
           ]
         },
@@ -291,24 +291,24 @@
         {
           "organization": "org.scala-js",
           "name": "scalajs-javalib",
-          "version": "1.19.0",
+          "version": "1.20.2",
           "configurations": "default",
           "artifacts": [
             {
               "name": "scalajs-javalib",
-              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-javalib/1.19.0/scalajs-javalib-1.19.0.jar"
+              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-javalib/1.20.2/scalajs-javalib-1.20.2.jar"
             }
           ]
         },
         {
           "organization": "org.scala-js",
           "name": "scalajs-library_2.13",
-          "version": "1.19.0",
+          "version": "1.20.2",
           "configurations": "default",
           "artifacts": [
             {
               "name": "scalajs-library_2.13",
-              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-library_2.13/1.19.0/scalajs-library_2.13-1.19.0.jar"
+              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-library_2.13/1.20.2/scalajs-library_2.13-1.20.2.jar"
             }
           ]
         },
@@ -363,24 +363,24 @@
         {
           "organization": "org.scala-js",
           "name": "scalajs-test-interface_2.13",
-          "version": "1.19.0",
+          "version": "1.20.2",
           "configurations": "default",
           "artifacts": [
             {
               "name": "scalajs-test-interface_2.13",
-              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-test-interface_2.13/1.19.0/scalajs-test-interface_2.13-1.19.0.jar"
+              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-test-interface_2.13/1.20.2/scalajs-test-interface_2.13-1.20.2.jar"
             }
           ]
         },
         {
           "organization": "org.scala-js",
           "name": "scalajs-test-bridge_2.13",
-          "version": "1.19.0",
+          "version": "1.20.2",
           "configurations": "default",
           "artifacts": [
             {
               "name": "scalajs-test-bridge_2.13",
-              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-test-bridge_2.13/1.19.0/scalajs-test-bridge_2.13-1.19.0.jar"
+              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-js/scalajs-test-bridge_2.13/1.20.2/scalajs-test-bridge_2.13-1.20.2.jar"
             }
           ]
         },
@@ -399,12 +399,12 @@
         {
           "organization": "org.scala-lang",
           "name": "scala-library",
-          "version": "2.13.16",
+          "version": "2.13.18",
           "configurations": "default",
           "artifacts": [
             {
               "name": "scala-library",
-              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar"
+              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.18/scala-library-2.13.18.jar"
             }
           ]
         },

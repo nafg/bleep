@@ -26,7 +26,7 @@
       "<COURSIER>/https/repo1.maven.org/maven2/co/fs2/fs2-io_3/3.10.0/fs2-io_3-3.10.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/co/fs2/fs2-reactive-streams_3/3.12.0/fs2-reactive-streams_3-3.12.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/brotli4j/1.18.0/brotli4j-1.18.0.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-osx-aarch64/1.18.0/native-osx-aarch64-1.18.0.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-<MASKED_OS>-x86_64/1.18.0/native-<MASKED_OS>-x86_64-1.18.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/service/1.18.0/service-1.18.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/comcast/ip4s-core_3/3.5.0/ip4s-core_3-3.5.0.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.18.2/jackson-annotations-2.18.2.jar",
@@ -60,9 +60,10 @@
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-resolver-dns-native-macos/4.1.118.Final/netty-resolver-dns-native-macos-4.1.118.Final-osx-x86_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-resolver-dns/4.1.118.Final/netty-resolver-dns-4.1.118.Final.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-resolver/4.1.118.Final/netty-resolver-4.1.118.Final.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.70.Final/netty-tcnative-boringssl-static-2.0.70.Final-<MASKED_OS>-aarch_64.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.70.Final/netty-tcnative-boringssl-static-2.0.70.Final-<MASKED_OS>-x86_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.70.Final/netty-tcnative-boringssl-static-2.0.70.Final-osx-aarch_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.70.Final/netty-tcnative-boringssl-static-2.0.70.Final-osx-x86_64.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.70.Final/netty-tcnative-boringssl-static-2.0.70.Final-<MASKED_OS>-aarch_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.70.Final/netty-tcnative-boringssl-static-2.0.70.Final-<MASKED_OS>-x86_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.70.Final/netty-tcnative-classes-2.0.70.Final.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-classes-epoll/4.1.118.Final/netty-transport-classes-epoll-4.1.118.Final.jar",
@@ -71,17 +72,17 @@
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.1.118.Final/netty-transport-native-epoll-4.1.118.Final-<MASKED_OS>-x86_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-native-kqueue/4.1.118.Final/netty-transport-native-kqueue-4.1.118.Final-osx-aarch_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-native-kqueue/4.1.118.Final/netty-transport-native-kqueue-4.1.118.Final-osx-x86_64.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.1.118.Final/netty-transport-native-unix-common-4.1.118.Final-osx-aarch_64.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.1.118.Final/netty-transport-native-unix-common-4.1.118.Final-osx-x86_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.1.118.Final/netty-transport-native-unix-common-4.1.118.Final-<MASKED_OS>-aarch_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.1.118.Final/netty-transport-native-unix-common-4.1.118.Final-<MASKED_OS>-x86_64.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.1.118.Final/netty-transport-native-unix-common-4.1.118.Final-osx-aarch_64.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.1.118.Final/netty-transport-native-unix-common-4.1.118.Final-osx-x86_64.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.1.118.Final/netty-transport-native-unix-common-4.1.118.Final.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/io/netty/netty-transport/4.1.118.Final/netty-transport-4.1.118.Final.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/hdrhistogram/HdrHistogram/2.2.2/HdrHistogram-2.2.2.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/latencyutils/LatencyUtils/2.0.3/LatencyUtils-2.0.3.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/modules/scala-java8-compat_3/1.0.2/scala-java8-compat_3-1.0.2.jar",
-      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
+      "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.18/scala-library-2.13.18.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.3.6/scala3-library_3-3.3.6.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/scodec/scodec-bits_3/1.1.38/scodec-bits_3-1.1.38.jar",
       "<COURSIER>/https/repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar",
@@ -430,6 +431,18 @@
           ]
         },
         {
+          "organization": "com.aayushatharva.brotli4j",
+          "name": "native-<MASKED_OS>-x86_64",
+          "version": "1.18.0",
+          "configurations": "default",
+          "artifacts": [
+            {
+              "name": "native-<MASKED_OS>-x86_64",
+              "path": "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-<MASKED_OS>-x86_64/1.18.0/native-<MASKED_OS>-x86_64-1.18.0.jar"
+            }
+          ]
+        },
+        {
           "organization": "io.netty",
           "name": "netty-transport-native-epoll",
           "version": "4.1.118.Final",
@@ -528,18 +541,6 @@
             {
               "name": "slf4j-api",
               "path": "<COURSIER>/https/repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar"
-            }
-          ]
-        },
-        {
-          "organization": "com.aayushatharva.brotli4j",
-          "name": "native-osx-aarch64",
-          "version": "1.18.0",
-          "configurations": "default",
-          "artifacts": [
-            {
-              "name": "native-osx-aarch64",
-              "path": "<COURSIER>/https/repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-osx-aarch64/1.18.0/native-osx-aarch64-1.18.0.jar"
             }
           ]
         },
@@ -779,12 +780,12 @@
         {
           "organization": "org.scala-lang",
           "name": "scala-library",
-          "version": "2.13.16",
+          "version": "2.13.18",
           "configurations": "default",
           "artifacts": [
             {
               "name": "scala-library",
-              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar"
+              "path": "<COURSIER>/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.18/scala-library-2.13.18.jar"
             }
           ]
         },
